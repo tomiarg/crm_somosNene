@@ -95,6 +95,11 @@
             <div class="stat-card text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Cobrado</p><h2 id="st-cobrado" class="text-3xl font-extrabold mt-1 text-emerald-500">$0</h2></div>
             <div class="stat-card text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Tareas</p><h2 id="st-tareas" class="text-3xl font-extrabold mt-1">0</h2></div>
         </div>
+        <section id="mis-tareas-container" class="mb-10">
+    <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 italic">Mis Tareas Pendientes</h3>
+    <div id="lista-mis-tareas" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        </div>
+</section>
 
         <nav class="flex gap-8 border-b mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
             <button onclick="showTab('cobranzas')" id="nav-cobranzas" class="tab-btn active pb-4 text-xs font-black uppercase tracking-widest transition-all">Cobranzas</button>
@@ -116,9 +121,13 @@
 
         <section id="calendario" class="tab-content">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold uppercase text-xs tracking-widest text-slate-400 italic">Agenda Abril 2026</h3>
-                <button onclick="abrirModalTarea()" class="bg-red-500 text-white px-6 py-3 rounded-2xl text-xs font-bold">+ Asignar Tarea</button>
-            </div>
+    <div class="flex items-center gap-4">
+        <button onclick="cambiarMes(-1)" class="p-2 hover:bg-slate-100 rounded-full">◀</button>
+        <h3 id="mes-titulo" class="font-bold uppercase text-sm tracking-widest text-slate-800 italic">Mes Año</h3>
+        <button onclick="cambiarMes(1)" class="p-2 hover:bg-slate-100 rounded-full">▶</button>
+    </div>
+    <button onclick="abrirModalTarea()" class="bg-red-500 text-white px-6 py-3 rounded-2xl text-xs font-bold shadow-lg shadow-red-100">+ Asignar Tarea</button>
+</div>
             <div class="grid grid-cols-7 mb-1 text-center">
                 <div class="calendar-header-day">Lun</div><div class="calendar-header-day">Mar</div><div class="calendar-header-day">Mié</div>
                 <div class="calendar-header-day">Jue</div><div class="calendar-header-day">Vie</div><div class="calendar-header-day">Sáb</div><div class="calendar-header-day">Dom</div>
@@ -137,6 +146,12 @@
 
         let user = JSON.parse(localStorage.getItem('crm_user'));
         let cacheClientes = [];
+        let fechaActual = new Date(); // Hoy
+
+        function cambiarMes(delta) {
+    fechaActual.setMonth(fechaActual.getMonth() + delta);
+    cargarCalendario();
+}
 
         function login() {
             const mail = document.getElementById('login-email').value.toLowerCase().trim();
@@ -206,48 +221,89 @@
 
         // --- CALENDARIO VISUAL ---
         async function cargarCalendario() {
-            const res = await fetch(`${API_URL}/api/tareas`);
-            const tareas = await res.json();
-            const grid = document.getElementById('calendar-body');
-            if(!grid) return;
-            grid.innerHTML = "";
+    const res = await fetch(`${API_URL}/api/tareas`);
+    const tareas = await res.json();
+    const grid = document.getElementById('calendar-body');
+    const titulo = document.getElementById('mes-titulo');
+    if(!grid) return;
+    
+    grid.innerHTML = "";
+    
+    const año = fechaActual.getFullYear();
+    const mes = fechaActual.getMonth();
+    
+    // Título dinámico
+    const nombreMes = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaActual);
+    titulo.innerText = nombreMes;
 
-            const año = 2026, mes = 3; // Abril
-            const primerDiaMes = new Date(año, mes, 1).getDay();
-            const offset = primerDiaMes === 0 ? 6 : primerDiaMes - 1;
-            const diasEnMes = new Date(año, mes + 1, 0).getDate();
+    const primerDiaMes = new Date(año, mes, 1).getDay();
+    const offset = primerDiaMes === 0 ? 6 : primerDiaMes - 1;
+    const diasEnMes = new Date(año, mes + 1, 0).getDate();
 
-            for (let i = 0; i < offset; i++) grid.innerHTML += `<div class="calendar-day bg-slate-50/50"></div>`;
-            
-            for (let d = 1; d <= diasEnMes; d++) {
-                const fechaString = `${año}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const tareasDia = tareas.filter(t => t.fecha_ejecucion.startsWith(fechaString));
-                let tags = tareasDia.map(t => `<div class="task-tag user-${t.asignado_a.toLowerCase()} text-[9px]">${t.id_cliente}: ${t.tipo_tarea}</div>`).join('');
-                grid.innerHTML += `<div class="calendar-day border-t border-l"><span class="font-bold text-slate-300">${d}</span>${tags}</div>`;
-            }
-            document.getElementById('st-tareas').innerText = tareas.length;
-        }
+    // Días vacíos
+    for (let i = 0; i < offset; i++) grid.innerHTML += `<div class="calendar-day bg-slate-50/50"></div>`;
+    
+    // Días con tareas
+    for (let d = 1; d <= diasEnMes; d++) {
+        const fechaString = `${año}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const tareasDia = tareas.filter(t => t.fecha_ejecucion.split('T')[0] === fechaString);
+        
+        let tags = tareasDia.map(t => `<div class="task-tag user-${t.asignado_a.toLowerCase()} text-[9px]">${t.id_cliente}: ${t.tipo_tarea}</div>`).join('');
+        
+        grid.innerHTML += `
+            <div class="calendar-day border-t border-l">
+                <span class="font-bold ${d === new Date().getDate() && mes === new Date().getMonth() ? 'text-red-500' : 'text-slate-300'}">${d}</span>
+                ${tags}
+            </div>`;
+    }
+}
 
         function abrirModalTarea() { document.getElementById('modal-tarea').classList.add('active'); }
         function cerrarModales() { document.getElementById('modal-tarea').classList.remove('active'); }
 
         async function guardarTarea() {
-            const fecha = document.getElementById('task-date').value;
-            if(!fecha) return alert("Seleccioná fecha");
-            const data = {
-                id_cliente: document.getElementById('task-client-select').value,
-                tipo_tarea: document.getElementById('task-type-select').value,
-                asignado_a: document.getElementById('task-user-select').value,
-                detalle_tarea: {
-                    monto: document.getElementById('pauta-monto').value,
-                    seg: document.getElementById('pauta-seg').value
-                },
-                fecha: fecha
-            };
-            await fetch(`${API_URL}/api/tareas`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+    const fecha = document.getElementById('task-date').value;
+    const cliente = document.getElementById('task-client-select').value;
+    const tipo = document.getElementById('task-type-select').value;
+    const usuario = document.getElementById('task-user-select').value;
+
+    if (!fecha || !cliente) {
+        return alert("Por favor, selecciona fecha y cliente");
+    }
+
+    const data = {
+        id_cliente: cliente,
+        tipo_tarea: tipo,
+        asignado_a: usuario,
+        detalle_tarea: {
+            monto: document.getElementById('pauta-monto').value || 0,
+            seg: document.getElementById('pauta-seg').value || ""
+        },
+        fecha: fecha
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/api/tareas`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
             cerrarModales();
-            cargarCalendario();
+            // Limpiamos los campos para la próxima
+            document.getElementById('task-date').value = "";
+            // Recargamos el calendario para ver el cambio
+            await cargarCalendario(); 
+            alert("Tarea asignada correctamente");
+        } else {
+            alert("Error al guardar en el servidor");
         }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("No se pudo conectar con el servidor");
+    }
+}
 
         async function pagar(id) {
             const monto = prompt("Monto cobrado:");
