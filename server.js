@@ -26,22 +26,27 @@ app.get('/api/pagos-estado', async (req, res) => {
   try {
     const mesActual = getMesActual();
     
-    // Consulta mejorada: Trae info de clientes y si pagaron este mes
     const query = `
-  SELECT c.*, p.estado
-  FROM clientes c
-  LEFT JOIN pagos p ON c.id_cliente = p.id_cliente 
-  AND p.mes_referencia = $1
-  WHERE c.activo = true
-`;
+      SELECT 
+        c.id_cliente, 
+        c.nombre_cliente, 
+        c.monto_usd, 
+        c.monto_ars, 
+        p.estado, 
+        p.monto as monto_pagado,
+        p.forma_pago,
+        p.fecha_pago
+      FROM clientes c
+      LEFT JOIN pagos p ON c.id_cliente = p.id_cliente 
+      AND p.mes_referencia = $1
+      WHERE c.activo = true
+    `;
     const { rows } = await pool.query(query, [mesActual]);
     res.json(rows);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
-
 // --- RUTA 2: CARGAR UN PAGO ---
 app.post('/api/registrar-pago', async (req, res) => {
   const { id_cliente, monto, forma_pago } = req.body;
