@@ -3,58 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SENE CRM | Panel de Agencia</title>
+    <title>SENE CRM | Agencia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; color: #1e293b; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .tab-btn.active { color: #EF4444; border-bottom: 2px solid #EF4444; }
-        .stat-card { background: white; padding: 20px; border-radius: 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
-        .card-pending { border-left: 4px solid #EF4444; }
-        .card-paid { border-left: 4px solid #10B981; }
+        .tab-btn.active { color: #EF4444; border-bottom: 3px solid #EF4444; }
+        .stat-card { background: white; padding: 20px; border-radius: 20px; border: 1px solid #f1f5f9; }
+        .card-pending { border-left: 5px solid #EF4444; background: #fff5f5; }
+        .card-paid { border-left: 5px solid #10B981; background: #f0fdf4; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
     </style>
 </head>
 <body>
 
     <div id="login-overlay" class="fixed inset-0 bg-white z-50 flex items-center justify-center hidden">
         <div class="w-full max-w-sm p-8 text-center">
-            <h1 class="text-4xl font-extrabold mb-8 italic tracking-tighter">SOMOSNENE<span class="text-red-500">.</span></h1>
-            <input type="email" id="login-email" placeholder="Email de equipo" class="w-full p-4 border rounded-2xl mb-4 outline-none focus:ring-2 focus:ring-red-500 bg-gray-50">
-            <button onclick="login()" class="bg-red-500 text-white w-full py-4 rounded-2xl font-bold shadow-lg shadow-red-200">Entrar al Panel</button>
+            <h1 class="text-4xl font-extrabold mb-8 italic tracking-tighter text-red-500">SOMOSNENE.</h1>
+            <input type="email" id="login-email" placeholder="Email de equipo" class="w-full p-4 border rounded-2xl mb-4 outline-none bg-gray-50 focus:ring-2 focus:ring-red-500">
+            <button onclick="login()" class="bg-red-500 text-white w-full py-4 rounded-2xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-all">Entrar</button>
+        </div>
+    </div>
+
+    <div id="modal-tarea" class="modal">
+        <div class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl">
+            <h3 class="text-xl font-extrabold mb-6">Asignar Tarea</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-400">Cliente</label>
+                    <select id="task-client-select" class="w-full p-3 border rounded-xl bg-slate-50 outline-none"></select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-400">Acción</label>
+                    <select id="task-type-select" class="w-full p-3 border rounded-xl bg-slate-50 outline-none">
+                        <option value="Reel">Posteo: Reel</option>
+                        <option value="Post Plano">Posteo: Plano</option>
+                        <option value="Carrusel">Posteo: Carrusel</option>
+                        <option value="Story: Replicar">Story: Replicar</option>
+                        <option value="Story: Fuerte">Story: Fuerte</option>
+                        <option value="Pauta">Pauta Publicitaria</option>
+                    </select>
+                </div>
+                <div id="pauta-extra" class="hidden space-y-4">
+                    <input type="number" id="pauta-monto" placeholder="Monto Inversión" class="w-full p-3 border rounded-xl bg-slate-50">
+                    <input type="text" id="pauta-seg" placeholder="Segmentación" class="w-full p-3 border rounded-xl bg-slate-50">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase text-slate-400">Asignar a</label>
+                    <select id="task-user-select" class="w-full p-3 border rounded-xl bg-slate-50 outline-none">
+                        <option value="Mumi">Mumi</option>
+                        <option value="Yani">Yani</option>
+                        <option value="Tomi">Tomi</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 pt-4">
+                    <button onclick="cerrarModales()" class="flex-1 py-3 font-bold text-slate-400 hover:bg-slate-50 rounded-xl">Cancelar</button>
+                    <button onclick="guardarTarea()" class="flex-1 py-3 bg-red-500 text-white font-bold rounded-xl shadow-lg shadow-red-100">Asignar</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="max-w-6xl mx-auto p-6 md:p-10">
         <header class="flex justify-between items-center mb-10">
             <h1 class="text-2xl font-black italic tracking-tighter uppercase">SENE CRM</h1>
-            <button onclick="logout()" class="text-xs font-bold uppercase text-slate-400">Salir</button>
+            <div class="flex items-center gap-4 text-xs font-bold uppercase text-slate-400">
+                <span id="user-welcome"></span>
+                <button onclick="logout()" class="hover:text-red-500">Salir</button>
+            </div>
         </header>
 
         <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div class="stat-card text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Clientes</p>
+            <div class="stat-card">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Clientes Activos</p>
                 <h2 id="st-clientes" class="text-3xl font-extrabold mt-1">0</h2>
+                <p class="text-[10px] text-green-500 font-bold">+2 este mes</p>
             </div>
-            <div class="stat-card text-center">
+            <div class="stat-card">
                 <p class="text-[10px] font-bold text-slate-400 uppercase">Vencidos</p>
                 <h2 id="st-vencidos" class="text-3xl font-extrabold mt-1 text-red-500">0</h2>
+                <p class="text-[10px] text-red-400 italic">Requieren atención</p>
             </div>
-            <div class="stat-card text-center">
-                <p class="text-[10px] font-bold text-slate-400 uppercase">Cobrado Mes</p>
+            <div class="stat-card">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Ingresos Mes</p>
                 <h2 id="st-cobrado" class="text-3xl font-extrabold mt-1 text-emerald-500">$0</h2>
+                <p class="text-[10px] text-green-500 font-bold">+12% vs anterior</p>
             </div>
-            <div class="stat-card text-center">
+            <div class="stat-card">
                 <p class="text-[10px] font-bold text-slate-400 uppercase">Tareas Hoy</p>
-                <h2 id="st-tareas" class="text-3xl font-extrabold mt-1">0</h2>
+                <h2 id="st-tareas" class="text-3xl font-extrabold mt-1 text-slate-800">0</h2>
+                <p id="st-tareas-desc" class="text-[10px] text-slate-400">0 completadas</p>
             </div>
         </div>
 
         <nav class="flex gap-8 border-b mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
-            <button onclick="showTab('cobranzas')" id="nav-cobranzas" class="tab-btn active pb-4 text-xs font-black uppercase tracking-widest">Cobranzas</button>
-            <button onclick="showTab('clientes')" id="nav-clientes" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest">Base Clientes</button>
-            <button onclick="showTab('calendario')" id="nav-calendario" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest">Calendario</button>
+            <button onclick="showTab('cobranzas')" id="nav-cobranzas" class="tab-btn active pb-4 text-xs font-black uppercase tracking-widest transition-all">Cobranzas</button>
+            <button onclick="showTab('clientes')" id="nav-clientes" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest transition-all">Base Clientes</button>
+            <button onclick="showTab('calendario')" id="nav-calendario" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest transition-all">Calendario</button>
         </nav>
 
         <section id="cobranzas" class="tab-content active">
@@ -63,16 +111,16 @@
 
         <section id="clientes" class="tab-content">
             <div class="flex justify-end mb-4">
-                <button onclick="modalCliente()" class="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold">+ Nuevo Cliente</button>
+                <button onclick="modalNuevoCliente()" class="bg-black text-white px-6 py-3 rounded-2xl text-xs font-bold hover:bg-red-500 transition-all">+ Nuevo Cliente</button>
             </div>
-            <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+            <div class="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-slate-50 border-b">
                         <tr>
-                            <th class="p-4 font-bold">Nombre</th>
-                            <th class="p-4 font-bold">IG / Pass</th>
-                            <th class="p-4 font-bold">Monto</th>
-                            <th class="p-4 font-bold text-right">Acciones</th>
+                            <th class="p-5 font-bold">Nombre</th>
+                            <th class="p-5 font-bold">IG / Contraseña</th>
+                            <th class="p-5 font-bold text-right">Fee Mensual</th>
+                            <th class="p-5 font-bold text-right">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="cont-clientes-full"></tbody>
@@ -82,8 +130,8 @@
 
         <section id="calendario" class="tab-content">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold uppercase text-xs tracking-widest text-slate-400">Tareas del Equipo</h3>
-                <button onclick="modalTarea()" class="bg-red-500 text-white px-5 py-2 rounded-xl text-xs font-bold">+ Asignar</button>
+                <h3 class="font-bold uppercase text-xs tracking-widest text-slate-400 italic">Agenda Operativa</h3>
+                <button onclick="abrirModalTarea()" class="bg-red-500 text-white px-6 py-3 rounded-2xl text-xs font-bold hover:bg-black transition-all">+ Asignar Tarea</button>
             </div>
             <div id="cont-tareas" class="space-y-3"></div>
         </section>
@@ -98,17 +146,19 @@
         };
 
         let user = JSON.parse(localStorage.getItem('crm_user'));
+        let cacheClientes = [];
 
         function login() {
             const mail = document.getElementById('login-email').value.toLowerCase().trim();
             if(EQUIPO[mail]) {
                 localStorage.setItem('crm_user', JSON.stringify(EQUIPO[mail]));
                 window.location.reload();
-            } else { alert("Email no registrado."); }
+            } else { alert("Acceso restringido."); }
         }
 
         if(!user) { document.getElementById('login-overlay').classList.remove('hidden'); }
         else {
+            document.getElementById('user-welcome').innerText = `${user.nombre} (${user.rol})`;
             if(user.rol === 'operador') {
                 document.getElementById('nav-cobranzas').remove();
                 document.getElementById('nav-clientes').remove();
@@ -127,14 +177,20 @@
 
         async function init() {
             const res = await fetch(`${API_URL}/api/pagos-estado`);
-            const data = await res.json();
+            cacheClientes = await res.json();
             
             if(user.rol === 'admin') {
-                renderCobranzas(data);
-                renderClientes(data);
-                actualizarStats(data);
+                renderCobranzas(cacheClientes);
+                renderClientes(cacheClientes);
+                actualizarStats(cacheClientes);
             }
             cargarTareas();
+            llenarSelectClientes();
+        }
+
+        function llenarSelectClientes() {
+            const select = document.getElementById('task-client-select');
+            select.innerHTML = cacheClientes.map(c => `<option value="${c.id_cliente}">${c.nombre_cliente}</option>`).join('');
         }
 
         function actualizarStats(data) {
@@ -147,16 +203,16 @@
 
         function renderCobranzas(data) {
             document.getElementById('cont-cobranzas').innerHTML = data.map(c => `
-                <div class="stat-card ${c.estado === 'pagado' ? 'card-paid' : 'card-pending'} flex justify-between items-center transition-all hover:scale-[1.01]">
+                <div class="stat-card ${c.estado === 'pagado' ? 'card-paid' : 'card-pending'} flex justify-between items-center transition-all hover:scale-[1.01] shadow-sm">
                     <div>
-                        <h4 class="font-bold text-slate-800">${c.nombre_cliente}</h4>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${c.id_cliente}</p>
+                        <h4 class="font-extrabold text-slate-800">${c.nombre_cliente}</h4>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">${c.id_cliente}</p>
                     </div>
                     <div class="text-right">
                         <p class="text-xl font-black ${c.estado === 'pagado' ? 'text-emerald-500' : 'text-red-500'}">
-                            ${c.estado === 'pagado' ? 'PAGADO' : '$' + (c.monto_usd || c.monto_ars)}
+                            ${c.estado === 'pagado' ? 'AL DÍA' : '$' + (c.monto_usd || c.monto_ars)}
                         </p>
-                        ${c.estado !== 'pagado' ? `<button onclick="pagar('${c.id_cliente}')" class="text-[10px] font-black uppercase mt-1 text-slate-400 hover:text-black">Marcar Pago</button>` : ''}
+                        ${c.estado !== 'pagado' ? `<button onclick="pagar('${c.id_cliente}')" class="text-[9px] font-black uppercase text-slate-400 hover:text-black border-b border-transparent hover:border-black transition-all">Registrar Pago</button>` : ''}
                     </div>
                 </div>
             `).join('');
@@ -165,18 +221,68 @@
         function renderClientes(data) {
             document.getElementById('cont-clientes-full').innerHTML = data.map(c => `
                 <tr class="border-b hover:bg-slate-50 transition-colors">
-                    <td class="p-4 font-bold italic">${c.nombre_cliente}</td>
-                    <td class="p-4 text-xs font-mono">User: ${c.user_ig || '-'}<br>Pass: ${c.pass_ig || '-'}</td>
-                    <td class="p-4 font-bold text-red-500">$${c.monto_usd || c.monto_ars}</td>
-                    <td class="p-4 text-right">
-                        <button onclick="eliminarCliente('${c.id_cliente}')" class="text-red-300 hover:text-red-600 font-bold text-xs">ELIMINAR</button>
+                    <td class="p-5 font-extrabold italic text-slate-700">${c.nombre_cliente}</td>
+                    <td class="p-5 text-xs text-slate-500 font-mono">
+                        User: <span class="text-slate-800">${c.user_ig || '-'}</span><br>
+                        Pass: <span class="text-red-500">${c.pass_ig || '-'}</span>
+                    </td>
+                    <td class="p-5 font-bold text-right text-slate-800 italic">$${c.monto_usd || c.monto_ars}</td>
+                    <td class="p-5 text-right">
+                        <button onclick="eliminarCliente('${c.id_cliente}')" class="text-red-200 hover:text-red-600 transition-colors font-bold text-[10px] uppercase">Baja</button>
                     </td>
                 </tr>
             `).join('');
         }
 
+        function abrirModalTarea() { document.getElementById('modal-tarea').classList.add('active'); }
+        function cerrarModales() { document.getElementById('modal-tarea').classList.remove('active'); }
+
+        document.getElementById('task-type-select').addEventListener('change', (e) => {
+            const extra = document.getElementById('pauta-extra');
+            e.target.value === 'Pauta' ? extra.classList.remove('hidden') : extra.classList.add('hidden');
+        });
+
+        async function guardarTarea() {
+            const data = {
+                id_cliente: document.getElementById('task-client-select').value,
+                tipo_tarea: document.getElementById('task-type-select').value,
+                asignado_a: document.getElementById('task-user-select').value,
+                detalle_tarea: {
+                    monto: document.getElementById('pauta-monto').value,
+                    seg: document.getElementById('pauta-seg').value
+                },
+                fecha: new Date().toISOString().split('T')[0]
+            };
+            await fetch(`${API_URL}/api/tareas`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            cerrarModales();
+            cargarTareas();
+        }
+
+        async function cargarTareas() {
+            const res = await fetch(`${API_URL}/api/tareas`);
+            const data = await res.json();
+            document.getElementById('st-tareas').innerText = data.length;
+            document.getElementById('cont-tareas').innerHTML = data.map(t => `
+                <div class="stat-card flex justify-between items-center hover:bg-slate-50 transition-all border-l-4 border-red-500">
+                    <div>
+                        <span class="text-[9px] font-black uppercase text-red-500 tracking-tighter">${t.tipo_tarea}</span>
+                        <h4 class="font-extrabold text-slate-800">${t.id_cliente}</h4>
+                        ${t.tipo_tarea === 'Pauta' ? `<p class="text-[9px] text-slate-400 font-bold">Monto: $${JSON.parse(t.detalle_tarea).monto} | Seg: ${JSON.parse(t.detalle_tarea).seg}</p>` : ''}
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">${t.asignado_a}</p>
+                        <p class="text-xs font-bold font-mono">${new Date(t.fecha_ejecucion).toLocaleDateString()}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         async function pagar(id) {
-            const monto = prompt("Monto cobrado:");
+            const monto = prompt("Monto exacto cobrado:");
             if(monto) {
                 await fetch(`${API_URL}/api/registrar-pago`, {
                     method: 'POST',
@@ -188,19 +294,19 @@
         }
 
         async function eliminarCliente(id) {
-            if(confirm("¿Eliminar cliente?")) {
+            if(confirm("¿Seguro que quieres dar de baja a este cliente?")) {
                 await fetch(`${API_URL}/api/clientes/${id}`, { method: 'DELETE' });
                 init();
             }
         }
 
-        async function modalCliente() {
-            const id = prompt("ID Unico (Ej: NEBULA):");
-            const nombre = prompt("Nombre Cliente:");
+        async function modalNuevoCliente() {
+            const id = prompt("ID Único (Ej: MBER):");
+            const nombre = prompt("Nombre Comercial:");
             const usd = prompt("Fee USD:");
-            const ars = prompt("Fee ARS:");
+            const ars = prompt("Fee ARS (Solo número):");
             const user_ig = prompt("Usuario IG:");
-            const pass_ig = prompt("Pass IG:");
+            const pass_ig = prompt("Password IG:");
             
             if(id && nombre) {
                 await fetch(`${API_URL}/api/clientes`, {
@@ -209,43 +315,6 @@
                     body: JSON.stringify({id_cliente: id, nombre_cliente: nombre, monto_usd: usd, monto_ars: ars, user_ig, pass_ig})
                 });
                 init();
-            }
-        }
-
-        async function cargarTareas() {
-            const res = await fetch(`${API_URL}/api/tareas`);
-            const data = await res.json();
-            document.getElementById('st-tareas').innerText = data.length;
-            document.getElementById('cont-tareas').innerHTML = data.map(t => `
-                <div class="stat-card flex justify-between items-center">
-                    <div>
-                        <span class="text-[9px] font-black uppercase text-red-500 tracking-widest">${t.tipo_tarea}</span>
-                        <h4 class="font-bold text-slate-800">${t.id_cliente}</h4>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase">${t.asignado_a}</p>
-                        <p class="text-xs font-bold">${new Date(t.fecha_ejecucion).toLocaleDateString()}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        async function modalTarea() {
-            const id = prompt("ID Cliente:");
-            const tipo = prompt("Tipo (Reel / Story / Pauta):");
-            const asignado = prompt("¿Quién lo hace? (Mumi / Yani / Tomi):");
-            let detalle = {};
-            if(tipo.toLowerCase() === 'pauta') {
-                detalle.monto = prompt("Monto Pauta:");
-                detalle.seg = prompt("Segmentación:");
-            }
-            if(id && tipo) {
-                await fetch(`${API_URL}/api/tareas`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id_cliente: id, tipo_tarea: tipo, asignado_a: asignado, detalle_pauta: detalle, fecha: new Date().toISOString().split('T')[0]})
-                });
-                cargarTareas();
             }
         }
 

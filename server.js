@@ -18,7 +18,7 @@ const getMesActual = () => {
         .toLowerCase().trim();
 };
 
-// --- CLIENTES: LISTAR, CREAR, EDITAR, ELIMINAR ---
+// CLIENTES
 app.get('/api/clientes', async (req, res) => {
     try {
         const { rows } = await pool.query('SELECT * FROM clientes WHERE activo = true ORDER BY nombre_cliente ASC');
@@ -38,18 +38,6 @@ app.post('/api/clientes', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.put('/api/clientes/:id', async (req, res) => {
-    const { nombre_cliente, monto_usd, monto_ars, user_ig, pass_ig, descripcion } = req.body;
-    try {
-        await pool.query(
-            `UPDATE clientes SET nombre_cliente=$1, monto_usd=$2, monto_ars=$3, user_ig=$4, pass_ig=$5, descripcion=$6 
-             WHERE id_cliente=$7`,
-            [nombre_cliente, monto_usd, monto_ars, user_ig, pass_ig, descripcion, req.params.id]
-        );
-        res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
 app.delete('/api/clientes/:id', async (req, res) => {
     try {
         await pool.query('UPDATE clientes SET activo = false WHERE id_cliente = $1', [req.params.id]);
@@ -57,15 +45,16 @@ app.delete('/api/clientes/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- COBRANZAS ---
+// COBRANZAS
 app.get('/api/pagos-estado', async (req, res) => {
   try {
     const mesActual = getMesActual();
     const query = `
-      SELECT c.*, p.estado, p.monto as monto_pagado, p.forma_pago
+      SELECT c.*, p.estado, p.monto as monto_pagado
       FROM clientes c
       LEFT JOIN pagos p ON c.id_cliente = p.id_cliente AND p.mes_referencia = $1
       WHERE c.activo = true
+      ORDER BY c.nombre_cliente ASC
     `;
     const { rows } = await pool.query(query, [mesActual]);
     res.json(rows);
@@ -85,10 +74,10 @@ app.post('/api/registrar-pago', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// --- TAREAS ---
+// TAREAS (Calendario)
 app.get('/api/tareas', async (req, res) => {
     try {
-        const { rows } = await pool.query('SELECT * FROM tareas ORDER BY fecha_ejecucion ASC');
+        const { rows } = await pool.query('SELECT * FROM tareas ORDER BY id_tarea DESC LIMIT 50');
         res.json(rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -106,4 +95,4 @@ app.post('/api/tareas', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log(`CRM running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`CRM SENE running on port ${PORT}`));
