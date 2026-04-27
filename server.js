@@ -77,7 +77,6 @@ app.post('/api/registrar-pago', async (req, res) => {
 // --- TAREAS (CALENDARIO) ---
 app.get('/api/tareas', async (req, res) => {
     try {
-        // Traemos las tareas del mes actual para no sobrecargar
         const { rows } = await pool.query('SELECT * FROM tareas ORDER BY fecha_ejecucion ASC');
         res.json(rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -86,30 +85,22 @@ app.get('/api/tareas', async (req, res) => {
 app.post('/api/tareas', async (req, res) => {
     const { id_cliente, asignado_a, tipo_tarea, detalle_tarea, fecha } = req.body;
     try {
-        const query = `
-            INSERT INTO tareas (id_cliente, asignado_a, tipo_tarea, detalle_tarea, fecha_ejecucion)
-            VALUES ($1, $2, $3, $4, $5) RETURNING *;
-        `;
-        // Usamos JSON.stringify por si detalle_tarea viene como objeto
-        await pool.query(query, [id_cliente, asignado_a, tipo_tarea, JSON.stringify(detalle_tarea), fecha]);
+        await pool.query(
+            `INSERT INTO tareas (id_cliente, asignado_a, tipo_tarea, detalle_tarea, fecha_ejecucion)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [id_cliente, asignado_a, tipo_tarea, JSON.stringify(detalle_tarea), fecha]
+        );
         res.json({ success: true });
-    } catch (err) {
-        console.error("Error al insertar tarea:", err.message);
-        res.status(500).json({ error: err.message });
-    }
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 
 app.delete('/api/tareas/:id', async (req, res) => {
-    const { id } = req.params;
     try {
-        await pool.query('DELETE FROM tareas WHERE id_tarea = $1', [id]);
-        res.json({ success: true, message: "Tarea eliminada" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        await pool.query('DELETE FROM tareas WHERE id_tarea = $1', [req.params.id]);
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
-
 // ESTO SIEMPRE AL FINAL
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`CRM SENE running on port ${PORT}`));

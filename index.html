@@ -267,45 +267,65 @@
     }
 
     async function cargarCalendario() {
-        const res = await fetch(`${API_URL}/api/tareas`);
-        const tareas = await res.json();
-        const grid = document.getElementById('calendar-body');
-        const titulo = document.getElementById('mes-titulo');
-        let tags = tareasDia.map(t => `
-    <div onclick="gestionarTarea(${t.id_tarea}, '${t.id_cliente}')" 
-         class="task-tag user-${t.asignado_a.toLowerCase()} text-[9px] cursor-pointer hover:opacity-80">
-        ${t.id_cliente}: ${t.tipo_tarea}
-    </div>
-`).join('');
-        if(!grid) return;
-        
-        grid.innerHTML = "";
-        const año = fechaActual.getFullYear();
-        const mes = fechaActual.getMonth();
-        
-        const nombreMes = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaActual);
-        titulo.innerText = nombreMes;
+    const res = await fetch(`${API_URL}/api/tareas`);
+    const tareas = await res.json();
+    const grid = document.getElementById('calendar-body');
+    const titulo = document.getElementById('mes-titulo');
+    if(!grid) return;
+    
+    grid.innerHTML = "";
+    const año = fechaActual.getFullYear();
+    const mes = fechaActual.getMonth();
+    
+    titulo.innerText = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(fechaActual);
 
-        const primerDiaMes = new Date(año, mes, 1).getDay();
-        const offset = primerDiaMes === 0 ? 6 : primerDiaMes - 1;
-        const diasEnMes = new Date(año, mes + 1, 0).getDate();
+    const primerDiaMes = new Date(año, mes, 1).getDay();
+    const offset = primerDiaMes === 0 ? 6 : primerDiaMes - 1;
+    const diasEnMes = new Date(año, mes + 1, 0).getDate();
 
-        for (let i = 0; i < offset; i++) grid.innerHTML += `<div class="calendar-day bg-slate-50/50"></div>`;
+    for (let i = 0; i < offset; i++) grid.innerHTML += `<div class="calendar-day bg-slate-50/50 border"></div>`;
+    
+    for (let d = 1; d <= diasEnMes; d++) {
+        const fechaString = `${año}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const tareasDia = tareas.filter(t => t.fecha_ejecucion.split('T')[0] === fechaString);
         
-        for (let d = 1; d <= diasEnMes; d++) {
-            const fechaString = `${año}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-            const tareasDia = tareas.filter(t => t.fecha_ejecucion.split('T')[0] === fechaString);
-            
-            let tags = tareasDia.map(t => `<div class="task-tag user-${t.asignado_a.toLowerCase()} text-[9px]">${t.id_cliente}: ${t.tipo_tarea}</div>`).join('');
-            
-            grid.innerHTML += `
-                <div class="calendar-day border-t border-l">
-                    <span class="font-bold ${d === new Date().getDate() && mes === new Date().getMonth() ? 'text-red-500' : 'text-slate-300'}">${d}</span>
-                    ${tags}
-                </div>`;
-        }
-        document.getElementById('st-tareas').innerText = tareas.length;
+        let tags = tareasDia.map(t => {
+            // Buscamos el nombre real del cliente en nuestro cache
+            const cliente = cacheClientes.find(c => c.id_cliente === t.id_cliente);
+            const nombreMostrar = cliente ? cliente.nombre_cliente : t.id_cliente;
+
+            return `<div onclick="verDetalleTarea(${t.id_tarea}, '${nombreMostrar}', '${t.tipo_tarea}', '${t.asignado_a}')" 
+                         class="task-tag user-${t.asignado_a.toLowerCase()} text-[9px] cursor-pointer hover:brightness-90 transition-all">
+                        ${nombreMostrar}: ${t.tipo_tarea}
+                    </div>`;
+        }).join('');
+        
+        grid.innerHTML += `
+            <div class="calendar-day border p-1">
+                <span class="font-bold ${d === new Date().getDate() && mes === new Date().getMonth() ? 'text-red-500' : 'text-slate-300'}">${d}</span>
+                <div class="mt-1">${tags}</div>
+            </div>`;
     }
+}
+
+// --- FUNCIÓN VER DETALLE Y ELIMINAR ---
+async function verDetalleTarea(id, cliente, tipo, responsable) {
+    const confirmacion = confirm(
+        `DETALLE DE TAREA:\n\n` +
+        `Cliente: ${cliente}\n` +
+        `Tarea: ${tipo}\n` +
+        `Responsable: ${responsable}\n\n` +
+        `¿Deseas marcar esta tarea como COMPLETADA y eliminarla?`
+    );
+
+    if (confirmacion) {
+        const res = await fetch(`${API_URL}/api/tareas/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            await cargarCalendario();
+            if(typeof renderMisTareas === 'function') renderMisTareas();
+        }
+    }
+}
 
     function abrirModalTarea() { document.getElementById('modal-tarea').classList.add('active'); }
     function cerrarModales() { document.getElementById('modal-tarea').classList.remove('active'); }
