@@ -222,7 +222,24 @@
             </div>
         `).join('');
     }
-
+    async function gestionarTarea(id, cliente) {
+    if (confirm(`¿Terminaste la tarea de ${cliente}? \nSi aceptas, se eliminará del calendario.`)) {
+        try {
+            const res = await fetch(`${API_URL}/api/tareas/${id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                // Recargamos todo para que desaparezca
+                await cargarCalendario();
+                if(typeof renderMisTareas === 'function') renderMisTareas();
+            } else {
+                alert("No se pudo eliminar la tarea");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    }
+}
     function llenarSelectClientes() {
         document.getElementById('task-client-select').innerHTML = cacheClientes.map(c => `<option value="${c.id_cliente}">${c.nombre_cliente}</option>`).join('');
     }
@@ -254,6 +271,12 @@
         const tareas = await res.json();
         const grid = document.getElementById('calendar-body');
         const titulo = document.getElementById('mes-titulo');
+        let tags = tareasDia.map(t => `
+    <div onclick="gestionarTarea(${t.id_tarea}, '${t.id_cliente}')" 
+         class="task-tag user-${t.asignado_a.toLowerCase()} text-[9px] cursor-pointer hover:opacity-80">
+        ${t.id_cliente}: ${t.tipo_tarea}
+    </div>
+`).join('');
         if(!grid) return;
         
         grid.innerHTML = "";

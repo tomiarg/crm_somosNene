@@ -99,6 +99,17 @@ app.post('/api/tareas', async (req, res) => {
     }
 });
 
+
+app.delete('/api/tareas/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await pool.query('DELETE FROM tareas WHERE id_tarea = $1', [id]);
+        res.json({ success: true, message: "Tarea eliminada" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ESTO SIEMPRE AL FINAL
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`CRM SENE running on port ${PORT}`));
