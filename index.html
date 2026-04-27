@@ -127,14 +127,89 @@
                 </table>
             </div>
         </section>
+<style>
+    /* Colores por Usuario */
+    .user-mumi { background-color: #E0F2FE; color: #0369A1; border-left: 3px solid #0EA5E9; }
+    .user-tomi { background-color: #DCFCE7; color: #15803D; border-left: 3px solid #22C55E; }
+    .user-yani { background-color: #FCE7F3; color: #BE185D; border-left: 3px solid #EC4899; }
 
-        <section id="calendario" class="tab-content">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold uppercase text-xs tracking-widest text-slate-400 italic">Agenda Operativa</h3>
-                <button onclick="abrirModalTarea()" class="bg-red-500 text-white px-6 py-3 rounded-2xl text-xs font-bold hover:bg-black transition-all">+ Asignar Tarea</button>
-            </div>
-            <div id="cont-tareas" class="space-y-3"></div>
-        </section>
+    /* Grid del Calendario */
+    .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .calendar-day {
+        background: white;
+        min-height: 120px;
+        padding: 8px;
+        font-size: 11px;
+    }
+    .calendar-header-day {
+        background: #f8fafc;
+        padding: 10px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 10px;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .task-tag {
+        border-radius: 4px;
+        padding: 2px 6px;
+        margin-top: 4px;
+        font-weight: 700;
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+
+<section id="calendario" class="tab-content">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-bold">Calendario Operativo</h3>
+        <button onclick="abrirModalTarea()" class="bg-red-500 text-white px-6 py-2 rounded-xl font-bold hover:bg-black transition-all">+ Nueva Tarea</button>
+    </div>
+
+    <div class="grid grid-cols-7 mb-1">
+        <div class="calendar-header-day">Lun</div>
+        <div class="calendar-header-day">Mar</div>
+        <div class="calendar-header-day">Mié</div>
+        <div class="calendar-header-day">Jue</div>
+        <div class="calendar-header-day">Vie</div>
+        <div class="calendar-header-day">Sáb</div>
+        <div class="calendar-header-day">Dom</div>
+    </div>
+    
+    <div id="calendar-body" class="calendar-grid">
+        </div>
+</section>
+
+<div id="modal-tarea" class="modal">
+    <div class="bg-white p-8 rounded-3xl w-full max-w-md">
+        <h3 class="text-xl font-bold mb-4">Nueva Tarea</h3>
+        <div class="space-y-4">
+            <select id="task-client-select" class="w-full p-3 border rounded-xl bg-slate-50"></select>
+            <input type="date" id="task-date" class="w-full p-3 border rounded-xl bg-slate-50">
+            <select id="task-type-select" class="w-full p-3 border rounded-xl bg-slate-50">
+                <option value="Reel">Reel</option>
+                <option value="Pauta">Pauta</option>
+                <option value="Story">Story</option>
+            </select>
+            <select id="task-user-select" class="w-full p-3 border rounded-xl bg-slate-50">
+                <option value="Mumi">Mumi</option>
+                <option value="Tomi">Tomi</option>
+                <option value="Yani">Yani</option>
+            </select>
+            <button onclick="guardarTarea()" class="w-full py-4 bg-red-500 text-white font-bold rounded-2xl">Guardar en Calendario</button>
+        </div>
+    </div>
+</div>
     </div>
 
     <script>

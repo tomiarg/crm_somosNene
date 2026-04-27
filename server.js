@@ -18,7 +18,7 @@ const getMesActual = () => {
         .toLowerCase().trim();
 };
 
-// CLIENTES
+// --- CLIENTES ---
 app.get('/api/clientes', async (req, res) => {
     try {
         const { rows } = await pool.query('SELECT * FROM clientes WHERE activo = true ORDER BY nombre_cliente ASC');
@@ -45,7 +45,7 @@ app.delete('/api/clientes/:id', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// COBRANZAS
+// --- COBRANZAS ---
 app.get('/api/pagos-estado', async (req, res) => {
   try {
     const mesActual = getMesActual();
@@ -74,10 +74,11 @@ app.post('/api/registrar-pago', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// TAREAS (Calendario)
+// --- TAREAS (CALENDARIO) ---
 app.get('/api/tareas', async (req, res) => {
     try {
-        const { rows } = await pool.query('SELECT * FROM tareas ORDER BY id_tarea DESC LIMIT 50');
+        // Traemos las tareas del mes actual para no sobrecargar
+        const { rows } = await pool.query('SELECT * FROM tareas ORDER BY fecha_ejecucion ASC');
         res.json(rows);
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -94,5 +95,6 @@ app.post('/api/tareas', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ESTO SIEMPRE AL FINAL
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`CRM SENE running on port ${PORT}`));
