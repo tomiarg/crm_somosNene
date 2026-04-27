@@ -28,12 +28,12 @@ app.get('/api/pagos-estado', async (req, res) => {
     
     // Consulta mejorada: Trae info de clientes y si pagaron este mes
     const query = `
-      SELECT c.id_cliente, c.nombre_cliente, c.monto_usd, c.monto_ars, p.estado, p.monto_abonado
-      FROM clientes c
-      LEFT JOIN pagos p ON c.id_cliente = p.id_cliente 
-      AND p.mes_referencia = $1
-      WHERE c.activo = true
-    `;
+  SELECT c.*, p.estado
+  FROM clientes c
+  LEFT JOIN pagos p ON c.id_cliente = p.id_cliente 
+  AND p.mes_referencia = $1
+  WHERE c.activo = true
+`;
     const { rows } = await pool.query(query, [mesActual]);
     res.json(rows);
   } catch (err) {
