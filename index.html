@@ -3,76 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOMOSNENE - Agencia CRM</title>
+    <title>SENE CRM | Panel de Agencia</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F9FAFB; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; color: #1e293b; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .tab-btn.active { border-bottom: 3px solid #EF4444; color: #EF4444; }
-        .card-pending { border-left: 5px solid #EF4444; }
-        .card-paid { border-left: 5px solid #10B981; opacity: 0.7; }
+        .tab-btn.active { color: #EF4444; border-bottom: 2px solid #EF4444; }
+        .stat-card { background: white; padding: 20px; border-radius: 18px; border: 1px solid #f1f5f9; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+        .card-pending { border-left: 4px solid #EF4444; }
+        .card-paid { border-left: 4px solid #10B981; }
     </style>
 </head>
-<body class="text-slate-800">
+<body>
 
-    <div id="login-overlay" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center hidden">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl w-80 text-center">
-            <h2 class="text-2xl font-extrabold mb-4 italic text-red-600">SOMOSNENE</h2>
-            <input type="email" id="login-email" placeholder="Email de equipo" class="w-full p-3 border rounded-xl mb-4 text-center outline-none focus:ring-2 focus:ring-red-500">
-            <button onclick="login()" class="bg-slate-900 text-white w-full py-3 rounded-xl font-bold">Ingresar</button>
+    <div id="login-overlay" class="fixed inset-0 bg-white z-50 flex items-center justify-center hidden">
+        <div class="w-full max-w-sm p-8 text-center">
+            <h1 class="text-4xl font-extrabold mb-8 italic tracking-tighter">SOMOSNENE<span class="text-red-500">.</span></h1>
+            <input type="email" id="login-email" placeholder="Email de equipo" class="w-full p-4 border rounded-2xl mb-4 outline-none focus:ring-2 focus:ring-red-500 bg-gray-50">
+            <button onclick="login()" class="bg-red-500 text-white w-full py-4 rounded-2xl font-bold shadow-lg shadow-red-200">Entrar al Panel</button>
         </div>
     </div>
 
-    <div class="max-w-6xl mx-auto p-4 md:p-8">
+    <div class="max-w-6xl mx-auto p-6 md:p-10">
         <header class="flex justify-between items-center mb-10">
-            <div>
-                <h1 class="text-3xl font-extrabold tracking-tighter">SENE<span class="text-red-600">.</span> CRM</h1>
-                <p id="user-welcome" class="text-slate-500 text-sm font-medium italic"></p>
-            </div>
-            <button onclick="logout()" class="text-xs font-bold text-slate-400 uppercase hover:text-red-500">Cerrar Sesión</button>
+            <h1 class="text-2xl font-black italic tracking-tighter uppercase">SENE CRM</h1>
+            <button onclick="logout()" class="text-xs font-bold uppercase text-slate-400">Salir</button>
         </header>
 
-        <nav class="flex gap-8 border-b border-slate-200 mb-8 overflow-x-auto whitespace-nowrap">
-            <button onclick="showTab('cobranzas')" id="nav-cobranzas" class="tab-btn active pb-4 px-2 font-bold text-sm uppercase tracking-wider">Cobranzas</button>
-            <button onclick="showTab('clientes')" id="nav-clientes" class="tab-btn pb-4 px-2 font-bold text-sm uppercase tracking-wider">Clientes (Pass)</button>
-            <button onclick="showTab('calendario')" id="nav-calendario" class="tab-btn pb-4 px-2 font-bold text-sm uppercase tracking-wider">Calendario</button>
+        <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <div class="stat-card text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Clientes</p>
+                <h2 id="st-clientes" class="text-3xl font-extrabold mt-1">0</h2>
+            </div>
+            <div class="stat-card text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Vencidos</p>
+                <h2 id="st-vencidos" class="text-3xl font-extrabold mt-1 text-red-500">0</h2>
+            </div>
+            <div class="stat-card text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Cobrado Mes</p>
+                <h2 id="st-cobrado" class="text-3xl font-extrabold mt-1 text-emerald-500">$0</h2>
+            </div>
+            <div class="stat-card text-center">
+                <p class="text-[10px] font-bold text-slate-400 uppercase">Tareas Hoy</p>
+                <h2 id="st-tareas" class="text-3xl font-extrabold mt-1">0</h2>
+            </div>
+        </div>
+
+        <nav class="flex gap-8 border-b mb-8 overflow-x-auto whitespace-nowrap scrollbar-hide">
+            <button onclick="showTab('cobranzas')" id="nav-cobranzas" class="tab-btn active pb-4 text-xs font-black uppercase tracking-widest">Cobranzas</button>
+            <button onclick="showTab('clientes')" id="nav-clientes" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest">Base Clientes</button>
+            <button onclick="showTab('calendario')" id="nav-calendario" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest">Calendario</button>
         </nav>
 
         <section id="cobranzas" class="tab-content active">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="lista-cobranzas">
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="cont-cobranzas"></div>
         </section>
 
         <section id="clientes" class="tab-content">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <table class="w-full text-left">
-                    <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-bold">
+            <div class="flex justify-end mb-4">
+                <button onclick="modalCliente()" class="bg-black text-white px-5 py-2 rounded-xl text-xs font-bold">+ Nuevo Cliente</button>
+            </div>
+            <div class="bg-white rounded-2xl border overflow-hidden shadow-sm">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b">
                         <tr>
-                            <th class="p-4">Cliente</th>
-                            <th class="p-4">IG User</th>
-                            <th class="p-4">Contraseña</th>
-                            <th class="p-4">Fee Mensual</th>
+                            <th class="p-4 font-bold">Nombre</th>
+                            <th class="p-4 font-bold">IG / Pass</th>
+                            <th class="p-4 font-bold">Monto</th>
+                            <th class="p-4 font-bold text-right">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-clientes-body" class="text-sm"></tbody>
+                    <tbody id="cont-clientes-full"></tbody>
                 </table>
             </div>
         </section>
 
         <section id="calendario" class="tab-content">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">Tareas del Equipo</h3>
-                <button onclick="nuevaTarea()" id="btn-nueva-tarea" class="bg-red-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-900 transition-all">+ Nueva Tarea</button>
+                <h3 class="font-bold uppercase text-xs tracking-widest text-slate-400">Tareas del Equipo</h3>
+                <button onclick="modalTarea()" class="bg-red-500 text-white px-5 py-2 rounded-xl text-xs font-bold">+ Asignar</button>
             </div>
-            <div id="lista-tareas" class="space-y-3">
-                </div>
+            <div id="cont-tareas" class="space-y-3"></div>
         </section>
     </div>
 
     <script>
-        const API_URL = ""; // Tu URL de Railway aquí
+        const API_URL = ""; 
         const EQUIPO = {
             'yani.ls@gmail.com': { nombre: 'Yani', rol: 'admin' },
             'tomimoyanook@gmail.com': { nombre: 'Tomi', rol: 'admin' },
@@ -82,99 +100,156 @@
         let user = JSON.parse(localStorage.getItem('crm_user'));
 
         function login() {
-            const email = document.getElementById('login-email').value.toLowerCase();
-            if (EQUIPO[email]) {
-                localStorage.setItem('crm_user', JSON.stringify(EQUIPO[email]));
+            const mail = document.getElementById('login-email').value.toLowerCase().trim();
+            if(EQUIPO[mail]) {
+                localStorage.setItem('crm_user', JSON.stringify(EQUIPO[mail]));
                 window.location.reload();
-            } else {
-                alert("Email no autorizado");
-            }
+            } else { alert("Email no registrado."); }
         }
 
-        if (!user) {
-            document.getElementById('login-overlay').classList.remove('hidden');
-        } else {
-            document.getElementById('user-welcome').innerText = `Hola, ${user.nombre} (${user.rol})`;
-            if (user.rol === 'operador') {
+        if(!user) { document.getElementById('login-overlay').classList.remove('hidden'); }
+        else {
+            if(user.rol === 'operador') {
                 document.getElementById('nav-cobranzas').remove();
                 document.getElementById('nav-clientes').remove();
-                document.getElementById('btn-nueva-tarea').remove();
+                document.getElementById('stats-container').remove();
                 showTab('calendario');
             }
             init();
         }
 
-        function showTab(tabId) {
+        function showTab(t) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.getElementById('nav-' + tabId).classList.add('active');
+            document.getElementById(t).classList.add('active');
+            document.getElementById('nav-'+t).classList.add('active');
         }
 
         async function init() {
-            if (user.rol === 'admin') {
-                cargarCobranzas();
-                cargarClientesFull();
+            const res = await fetch(`${API_URL}/api/pagos-estado`);
+            const data = await res.json();
+            
+            if(user.rol === 'admin') {
+                renderCobranzas(data);
+                renderClientes(data);
+                actualizarStats(data);
             }
             cargarTareas();
         }
 
-        async function cargarCobranzas() {
-            const res = await fetch(`${API_URL}/api/pagos-estado`);
-            const data = await res.json();
-            const cont = document.getElementById('lista-cobranzas');
-            cont.innerHTML = data.map(c => `
-                <div class="${c.estado === 'pagado' ? 'card-paid' : 'card-pending'} bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center">
+        function actualizarStats(data) {
+            document.getElementById('st-clientes').innerText = data.length;
+            const vencidos = data.filter(c => c.estado !== 'pagado').length;
+            document.getElementById('st-vencidos').innerText = vencidos;
+            const cobrado = data.filter(c => c.estado === 'pagado').reduce((acc, c) => acc + (parseFloat(c.monto_pagado) || 0), 0);
+            document.getElementById('st-cobrado').innerText = '$' + cobrado.toLocaleString();
+        }
+
+        function renderCobranzas(data) {
+            document.getElementById('cont-cobranzas').innerHTML = data.map(c => `
+                <div class="stat-card ${c.estado === 'pagado' ? 'card-paid' : 'card-pending'} flex justify-between items-center transition-all hover:scale-[1.01]">
                     <div>
-                        <h4 class="font-extrabold text-lg">${c.nombre_cliente}</h4>
-                        <p class="text-xs text-slate-400 font-mono italic">${c.id_cliente}</p>
+                        <h4 class="font-bold text-slate-800">${c.nombre_cliente}</h4>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">${c.id_cliente}</p>
                     </div>
                     <div class="text-right">
-                        <span class="text-xl font-black ${c.estado === 'pagado' ? 'text-emerald-500' : 'text-red-500'}">
+                        <p class="text-xl font-black ${c.estado === 'pagado' ? 'text-emerald-500' : 'text-red-500'}">
                             ${c.estado === 'pagado' ? 'PAGADO' : '$' + (c.monto_usd || c.monto_ars)}
-                        </span>
-                        ${c.estado !== 'pagado' ? `<br><button onclick="registrarPago('${c.id_cliente}')" class="text-[9px] font-bold uppercase bg-slate-100 px-2 py-1 rounded-md mt-2">Cargar Pago</button>` : ''}
+                        </p>
+                        ${c.estado !== 'pagado' ? `<button onclick="pagar('${c.id_cliente}')" class="text-[10px] font-black uppercase mt-1 text-slate-400 hover:text-black">Marcar Pago</button>` : ''}
                     </div>
                 </div>
             `).join('');
         }
 
-        async function cargarClientesFull() {
-            const res = await fetch(`${API_URL}/api/pagos-estado`); // Reusamos esta ruta que ya trae datos de clientes
-            const data = await res.json();
-            document.getElementById('tabla-clientes-body').innerHTML = data.map(c => `
-                <tr class="border-b border-slate-50">
-                    <td class="p-4 font-bold text-red-600">${c.nombre_cliente}</td>
-                    <td class="p-4 text-slate-500 italic">${c.user_ig || 'n/a'}</td>
-                    <td class="p-4"><span class="bg-slate-100 px-2 py-1 rounded blur-[3px] hover:blur-none transition-all cursor-pointer font-mono">${c.pass_ig || '****'}</span></td>
-                    <td class="p-4 font-bold text-slate-900">$${c.monto_usd || c.monto_ars}</td>
+        function renderClientes(data) {
+            document.getElementById('cont-clientes-full').innerHTML = data.map(c => `
+                <tr class="border-b hover:bg-slate-50 transition-colors">
+                    <td class="p-4 font-bold italic">${c.nombre_cliente}</td>
+                    <td class="p-4 text-xs font-mono">User: ${c.user_ig || '-'}<br>Pass: ${c.pass_ig || '-'}</td>
+                    <td class="p-4 font-bold text-red-500">$${c.monto_usd || c.monto_ars}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="eliminarCliente('${c.id_cliente}')" class="text-red-300 hover:text-red-600 font-bold text-xs">ELIMINAR</button>
+                    </td>
                 </tr>
             `).join('');
         }
 
-        async function registrarPago(id) {
-            const monto = prompt("Monto exacto:");
-            const forma = prompt("Método (Transfer, Efectivo, USDT):");
+        async function pagar(id) {
+            const monto = prompt("Monto cobrado:");
             if(monto) {
                 await fetch(`${API_URL}/api/registrar-pago`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({id_cliente: id, monto, forma_pago: forma})
+                    body: JSON.stringify({id_cliente: id, monto, forma_pago: 'Transferencia'})
                 });
-                cargarCobranzas();
+                init();
+            }
+        }
+
+        async function eliminarCliente(id) {
+            if(confirm("¿Eliminar cliente?")) {
+                await fetch(`${API_URL}/api/clientes/${id}`, { method: 'DELETE' });
+                init();
+            }
+        }
+
+        async function modalCliente() {
+            const id = prompt("ID Unico (Ej: NEBULA):");
+            const nombre = prompt("Nombre Cliente:");
+            const usd = prompt("Fee USD:");
+            const ars = prompt("Fee ARS:");
+            const user_ig = prompt("Usuario IG:");
+            const pass_ig = prompt("Pass IG:");
+            
+            if(id && nombre) {
+                await fetch(`${API_URL}/api/clientes`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id_cliente: id, nombre_cliente: nombre, monto_usd: usd, monto_ars: ars, user_ig, pass_ig})
+                });
+                init();
             }
         }
 
         async function cargarTareas() {
-            const cont = document.getElementById('lista-tareas');
-            cont.innerHTML = "<p class='text-slate-400 text-sm italic'>Cargando tareas...</p>";
-            // Aquí iría el fetch a /api/tareas
+            const res = await fetch(`${API_URL}/api/tareas`);
+            const data = await res.json();
+            document.getElementById('st-tareas').innerText = data.length;
+            document.getElementById('cont-tareas').innerHTML = data.map(t => `
+                <div class="stat-card flex justify-between items-center">
+                    <div>
+                        <span class="text-[9px] font-black uppercase text-red-500 tracking-widest">${t.tipo_tarea}</span>
+                        <h4 class="font-bold text-slate-800">${t.id_cliente}</h4>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase">${t.asignado_a}</p>
+                        <p class="text-xs font-bold">${new Date(t.fecha_ejecucion).toLocaleDateString()}</p>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        function logout() {
-            localStorage.clear();
-            window.location.reload();
+        async function modalTarea() {
+            const id = prompt("ID Cliente:");
+            const tipo = prompt("Tipo (Reel / Story / Pauta):");
+            const asignado = prompt("¿Quién lo hace? (Mumi / Yani / Tomi):");
+            let detalle = {};
+            if(tipo.toLowerCase() === 'pauta') {
+                detalle.monto = prompt("Monto Pauta:");
+                detalle.seg = prompt("Segmentación:");
+            }
+            if(id && tipo) {
+                await fetch(`${API_URL}/api/tareas`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({id_cliente: id, tipo_tarea: tipo, asignado_a: asignado, detalle_pauta: detalle, fecha: new Date().toISOString().split('T')[0]})
+                });
+                cargarTareas();
+            }
         }
+
+        function logout() { localStorage.clear(); window.location.reload(); }
     </script>
 </body>
 </html>
