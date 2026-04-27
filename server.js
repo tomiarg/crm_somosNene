@@ -86,13 +86,17 @@ app.get('/api/tareas', async (req, res) => {
 app.post('/api/tareas', async (req, res) => {
     const { id_cliente, asignado_a, tipo_tarea, detalle_tarea, fecha } = req.body;
     try {
-        await pool.query(
-            `INSERT INTO tareas (id_cliente, asignado_a, tipo_tarea, detalle_tarea, fecha_ejecucion)
-             VALUES ($1, $2, $3, $4, $5)`,
-            [id_cliente, asignado_a, tipo_tarea, JSON.stringify(detalle_tarea), fecha]
-        );
+        const query = `
+            INSERT INTO tareas (id_cliente, asignado_a, tipo_tarea, detalle_tarea, fecha_ejecucion)
+            VALUES ($1, $2, $3, $4, $5) RETURNING *;
+        `;
+        // Usamos JSON.stringify por si detalle_tarea viene como objeto
+        await pool.query(query, [id_cliente, asignado_a, tipo_tarea, JSON.stringify(detalle_tarea), fecha]);
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+        console.error("Error al insertar tarea:", err.message);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ESTO SIEMPRE AL FINAL
