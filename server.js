@@ -12,8 +12,10 @@ app.use(express.static('.'));
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Esto es VITAL para conexiones externas en Railway
+  }
 });
-
 // Función para tener el mismo formato de mes siempre
 const getMesActual = () => {
     return new Date().toLocaleString('es-ES', { month: 'long', year: 'numeric' });
