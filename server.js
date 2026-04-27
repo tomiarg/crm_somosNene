@@ -18,7 +18,7 @@ const pool = new Pool({
 });
 // Función para tener el mismo formato de mes siempre
 const getMesActual = () => {
-    return new Date().toLocaleString('es-ES', { month: 'long', year: 'numeric' });
+    return new Date().toLocaleString('es-ES', { month: 'long', year: 'numeric' }).toLowerCase();
 };
 
 // --- RUTA 1: OBTENER ESTADO DE PAGOS (ADMIN) ---
