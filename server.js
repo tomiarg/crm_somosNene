@@ -31,13 +31,22 @@ app.post('/api/clientes', async (req, res) => {
     try {
         await pool.query(
             `INSERT INTO clientes (id_cliente, nombre_cliente, monto_usd, monto_ars, user_ig, pass_ig, descripcion, activo) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, true)`,
+             VALUES ($1, $2, $3, $4, $5, $6, $7, true)
+             ON CONFLICT (id_cliente) 
+             DO UPDATE SET 
+                nombre_cliente = EXCLUDED.nombre_cliente,
+                monto_usd = EXCLUDED.monto_usd,
+                monto_ars = EXCLUDED.monto_ars,
+                user_ig = EXCLUDED.user_ig,
+                pass_ig = EXCLUDED.pass_ig,
+                activo = true`,
             [id_cliente, nombre_cliente, monto_usd, monto_ars, user_ig, pass_ig, descripcion]
         );
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
 });
-
 app.delete('/api/clientes/:id', async (req, res) => {
     try {
         await pool.query('UPDATE clientes SET activo = false WHERE id_cliente = $1', [req.params.id]);
