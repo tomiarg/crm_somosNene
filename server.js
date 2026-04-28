@@ -73,6 +73,22 @@ app.post('/api/registrar-pago', async (req, res) => {
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
+// --- NUEVA RUTA: HISTORIAL COMPLETO DE PAGOS ---
+app.get('/api/pagos', async (req, res) => {
+    try {
+        const query = `
+            SELECT p.*, c.nombre_cliente 
+            FROM pagos p 
+            JOIN clientes c ON p.id_cliente = c.id_cliente 
+            ORDER BY p.fecha_pago DESC
+        `;
+        const { rows } = await pool.query(query);
+        res.json(rows);
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
 
 // --- TAREAS (CALENDARIO) ---
 app.get('/api/tareas', async (req, res) => {

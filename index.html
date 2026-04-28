@@ -79,6 +79,28 @@
             </div>
         </div>
     </div>
+    <div id="modal-historial" class="modal">
+    <div class="bg-white p-8 rounded-3xl w-full max-w-2xl shadow-2xl max-h-[85vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h3 id="historial-titulo" class="text-2xl font-black italic text-slate-800">Historial</h3>
+            <button onclick="cerrarModales()" class="text-slate-400 hover:text-red-500 font-bold bg-slate-100 w-8 h-8 rounded-full">X</button>
+        </div>
+        <div class="bg-slate-50 rounded-2xl border border-slate-100 overflow-hidden">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-100 border-b">
+                    <tr>
+                        <th class="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-500">Fecha / Cliente</th>
+                        <th class="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-500">Mes Ref.</th>
+                        <th class="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-500">Monto</th>
+                        <th class="p-4 font-bold text-[10px] uppercase tracking-widest text-slate-500">Método</th>
+                    </tr>
+                </thead>
+                <tbody id="historial-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
     <div class="max-w-6xl mx-auto p-6 md:p-10">
         <header class="flex justify-between items-center mb-10">
@@ -120,7 +142,13 @@
             <button onclick="showTab('calendario')" id="nav-calendario" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest transition-all">Calendario</button>
         </nav>
 
-        <section id="cobranzas" class="tab-content active"><div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="cont-cobranzas"></div></section>
+        <section id="cobranzas" class="tab-content active">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="font-bold uppercase text-xs tracking-widest text-slate-400 italic">Estado del Mes Actual</h3>
+        <button onclick="verHistorialGlobal()" class="bg-slate-900 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md hover:bg-slate-800 transition-all">Ver Balance General</button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="cont-cobranzas"></div>
+</section>
 
         <section id="clientes" class="tab-content">
             <div class="flex justify-end mb-4"><button onclick="modalNuevoCliente()" class="bg-black text-white px-6 py-3 rounded-2xl text-xs font-bold">+ Nuevo Cliente</button></div>
@@ -207,6 +235,58 @@
         llenarSelectClientes();
         renderMisTareas(); // <-- Nueva función para ver tareas personales
     }
+
+    // Cargar el historial de UN cliente específico
+async function verHistorialCliente(id_cliente, nombre) {
+    const res = await fetch(`${API_URL}/api/pagos`);
+    const todosLosPagos = await res.json();
+    
+    // Filtramos solo los de este cliente
+    const pagosCliente = todosLosPagos.filter(p => p.id_cliente === id_cliente);
+    
+    document.getElementById('historial-titulo').innerText = `Pagos: ${nombre}`;
+    const body = document.getElementById('historial-body');
+    
+    if(pagosCliente.length === 0) {
+        body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic font-bold">Aún no hay pagos registrados para este cliente.</td></tr>`;
+    } else {
+        body.innerHTML = pagosCliente.map(p => `
+            <tr class="border-b hover:bg-white transition-colors">
+                <td class="p-4 font-mono text-xs font-bold text-slate-700">${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</td>
+                <td class="p-4 font-bold uppercase text-[10px] text-slate-500 tracking-widest">${p.mes_referencia}</td>
+                <td class="p-4 font-black text-emerald-500">$${p.monto}</td>
+                <td class="p-4 text-xs font-bold text-slate-400 uppercase">${p.forma_pago || '-'}</td>
+            </tr>
+        `).join('');
+    }
+    document.getElementById('modal-historial').classList.add('active');
+}
+
+// Cargar el historial GLOBAL (Balance de la agencia)
+async function verHistorialGlobal() {
+    const res = await fetch(`${API_URL}/api/pagos`);
+    const todosLosPagos = await res.json();
+    
+    document.getElementById('historial-titulo').innerText = `Balance General Histórico`;
+    const body = document.getElementById('historial-body');
+    
+    if(todosLosPagos.length === 0) {
+        body.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-slate-400 italic">No hay ingresos registrados en el sistema.</td></tr>`;
+    } else {
+        body.innerHTML = todosLosPagos.map(p => `
+            <tr class="border-b hover:bg-white transition-colors">
+                <td class="p-4 text-xs">
+                    <span class="font-mono font-bold text-slate-400">${new Date(p.fecha_pago).toLocaleDateString('es-AR')}</span><br>
+                    <span class="font-extrabold text-slate-800 italic">${p.nombre_cliente}</span>
+                </td>
+                <td class="p-4 font-bold uppercase text-[10px] text-slate-500 tracking-widest">${p.mes_referencia}</td>
+                <td class="p-4 font-black text-emerald-500">$${p.monto}</td>
+                <td class="p-4 text-xs font-bold text-slate-400 uppercase">${p.forma_pago || '-'}</td>
+            </tr>
+        `).join('');
+    }
+    document.getElementById('modal-historial').classList.add('active');
+}
 
     // --- NUEVA FUNCIÓN: MIS TAREAS EN DASHBOARD ---
 async function renderMisTareas() {
@@ -305,11 +385,27 @@ async function verDetalleTarea(id, cliente, tipo, responsable) {
     }
 
     function renderClientes(data) {
-        document.getElementById('cont-clientes-full').innerHTML = data.map(c => `
-            <tr class="border-b"><td class="p-5 font-extrabold italic">${c.nombre_cliente}</td><td class="p-5 text-xs text-slate-500 font-mono">U: ${c.user_ig || '-'}<br>P: ${c.pass_ig || '-'}</td>
-            <td class="p-5 font-bold text-right text-slate-800 italic">$${c.monto_usd || c.monto_ars}</td><td class="p-5 text-right"><button onclick="eliminarCliente('${c.id_cliente}')" class="text-red-300 font-bold text-[10px] uppercase">Baja</button></td></tr>`).join('');
-    }
-
+    document.getElementById('cont-clientes-full').innerHTML = data.map(c => `
+        <tr class="border-b hover:bg-slate-50 transition-colors">
+            <td class="p-5 font-extrabold italic text-slate-700">
+                ${c.nombre_cliente}
+            </td>
+            <td class="p-5 text-xs text-slate-500 font-mono">
+                U: <span class="text-slate-800">${c.user_ig || '-'}</span><br>
+                P: <span class="text-red-500">${c.pass_ig || '-'}</span>
+            </td>
+            <td class="p-5 font-bold text-right text-slate-800 italic">
+                $${c.monto_usd || c.monto_ars}
+            </td>
+            <td class="p-5">
+                <div class="flex justify-end gap-4">
+                    <button onclick="verHistorialCliente('${c.id_cliente}', '${c.nombre_cliente}')" class="text-blue-400 hover:text-blue-600 font-bold text-[10px] uppercase transition-colors">Historial</button>
+                    <button onclick="eliminarCliente('${c.id_cliente}')" class="text-red-300 hover:text-red-600 font-bold text-[10px] uppercase transition-colors">Baja</button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
     async function cargarCalendario() {
     const res = await fetch(`${API_URL}/api/tareas`);
     const tareas = await res.json();
@@ -372,7 +468,10 @@ async function verDetalleTarea(id, cliente, tipo, responsable) {
 }
 
     function abrirModalTarea() { document.getElementById('modal-tarea').classList.add('active'); }
-    function cerrarModales() { document.getElementById('modal-tarea').classList.remove('active'); }
+    function cerrarModales() { 
+    document.getElementById('modal-tarea').classList.remove('active'); 
+    document.getElementById('modal-historial').classList.remove('active'); 
+}
 
     async function guardarTarea() {
         const fecha = document.getElementById('task-date').value;
