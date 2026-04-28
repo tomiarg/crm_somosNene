@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Migración SENE CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 p-10 font-sans">
+    <div class="max-w-3xl mx-auto bg-white p-10 rounded-3xl shadow-xl border border-slate-100">
+        <h1 class="text-3xl font-black italic text-slate-800 mb-2">Importador de Google Sheets</h1>
+        <p class="text-slate-500 text-sm mb-6">Esta herramienta lee las columnas copiadas desde tu Excel y las inyecta en la base de datos de Railway.</p>
+
+        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-6 text-sm text-blue-800">
+            <strong>Instrucciones:</strong><br>
+            1. En tu Google Sheet, acomodá las columnas en este orden exacto:<br>
+            <span class="font-mono font-bold bg-white px-2 py-1 rounded mt-2 inline-block">ID Cliente | Nombre | USD | ARS | IG User | IG Password</span><br>
+            2. Seleccioná todas las filas (sin los títulos), presioná <b>Ctrl+C</b>.<br>
+            3. Pegá acá abajo con <b>Ctrl+V</b>.
+        </div>
+
+        <textarea id="datos-excel" rows="10" class="w-full border-2 border-slate-200 rounded-xl p-4 font-mono text-xs mb-4 focus:outline-none focus:border-red-500" placeholder="Ejemplo al pegar:&#10;VERA    Estudio Vera    150    0    user.vera    pass123"></textarea>
+        
+        <button onclick="migrarClientes()" class="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-red-500 transition-all">Migrar a la Base de Datos</button>
+
+        <div id="consola" class="mt-6 font-mono text-xs text-slate-600 bg-slate-100 p-4 rounded-xl h-40 overflow-y-auto hidden"></div>
+    </div>
+
+    <script>
+        // Si tu backend está en Railway y probás esto local, poné la URL completa acá (ej: "https://tu-railway.app")
+        const API_URL = ""; 
+
+        async function migrarClientes() {
+            const texto = document.getElementById('datos-excel').value;
+            const filas = texto.split('\n');
+            const consola = document.getElementById('consola');
+            
+            consola.classList.remove('hidden');
+            consola.innerHTML = "Iniciando migración...<br>";
+
+            let exitosos = 0;
+
+            for (let fila of filas) {
+                if(!fila.trim()) continue; // Salta filas vacías
+                
+                // Al pegar de Sheets, los datos se separan por un "Tabulador" (\t)
+                const columnas = fila.split('\t');
+                
+                const data = {
+                    id_cliente: columnas[0]?.trim(),
+                    nombre_cliente: columnas[1]?.trim(),
+                    monto_usd: columnas[2]?.trim() || 0,
+                    monto_ars: columnas[3]?.trim() || 0,
+                    user_ig: columnas[4]?.trim() || '',
+                    pass_ig: columnas[5]?.trim() || ''
+                };
+
+                if(data.id_cliente && data.nombre_cliente) {
+                    try {
+                        const res = await fetch(`${API_URL}/api/clientes`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify(data)
+                        });
+                        
+                        if(res.ok) {
+                            consola.innerHTML += `✅ Importado: ${data.nombre_cliente}<br>`;
+                            exitosos++;
+                        } else {
+                            consola.innerHTML += `❌ Error en: ${data.nombre_cliente} (Posible ID duplicado)<br>`;
+                        }
+                    } catch(e) {
+                        consola.innerHTML += `⚠️ Falla de conexión con: ${data.nombre_cliente}<br>`;
+                    }
+                }
+            }
+            consola.innerHTML += `<br><b>🎉 ¡Proceso Finalizado! (${exitosos} clientes importados)</b>`;
+        }
+    </script>
+</body>
+</html>
