@@ -117,6 +117,26 @@ app.delete('/api/tareas/:id', async (req, res) => {
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
+// --- RUTA: ESTADÍSTICAS FINANCIERAS ---
+app.get('/api/stats-financieras', async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                mes_referencia, 
+                SUM(monto) as total_cobrado,
+                COUNT(*) as cantidad_pagos
+            FROM pagos 
+            GROUP BY mes_referencia 
+            ORDER BY MIN(fecha_pago) ASC 
+            LIMIT 12
+        `;
+        const { rows } = await pool.query(query);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 // ESTO SIEMPRE AL FINAL
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => console.log(`CRM SENE running on port ${PORT}`));

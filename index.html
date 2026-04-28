@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SENE CRM | Agencia</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #F8F9FA; color: #1e293b; }
@@ -140,6 +141,7 @@
             <button onclick="showTab('cobranzas')" id="nav-cobranzas" class="tab-btn active pb-4 text-xs font-black uppercase tracking-widest transition-all">Cobranzas</button>
             <button onclick="showTab('clientes')" id="nav-clientes" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest transition-all">Base Clientes</button>
             <button onclick="showTab('calendario')" id="nav-calendario" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest transition-all">Calendario</button>
+            <button onclick="showTab('finanzas')" id="nav-finanzas" class="tab-btn pb-4 text-xs font-black uppercase tracking-widest transition-all">Finanzas</button>
         </nav>
 
         <section id="cobranzas" class="tab-content active">
@@ -175,6 +177,27 @@
             </div>
             <div id="calendar-body" class="calendar-grid"></div>
         </section>
+        <section id="finanzas" class="tab-content">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="stat-card bg-slate-900 text-white">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ticket Promedio</p>
+            <h2 id="kpi-ticket" class="text-3xl font-black mt-1">$0</h2>
+        </div>
+        <div class="stat-card">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Proyección Mes (100%)</p>
+            <h2 id="kpi-proyeccion" class="text-3xl font-black mt-1 text-blue-600">$0</h2>
+        </div>
+        <div class="stat-card">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Efectividad de Cobro</p>
+            <h2 id="kpi-efectividad" class="text-3xl font-black mt-1 text-emerald-500">0%</h2>
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+        <h3 class="font-bold text-slate-800 mb-6 italic">Evolución de Ingresos Mensuales</h3>
+        <canvas id="chartIngresos" height="100"></canvas>
+    </div>
+</section>
     </div>
 <script>
     const API_URL = ""; 
@@ -215,12 +238,14 @@
     }
 
     function showTab(t) {
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(t).classList.add('active');
-        document.getElementById('nav-'+t).classList.add('active');
-        if(t === 'calendario') cargarCalendario();
-    }
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(t).classList.add('active');
+    document.getElementById('nav-'+t).classList.add('active');
+    
+    if(t === 'calendario') cargarCalendario();
+    if(t === 'finanzas') cargarFinanzas(); // <-- Agregá esta línea
+}
 
     async function init() {
         const res = await fetch(`${API_URL}/api/pagos-estado`);
@@ -538,6 +563,52 @@ async function verDetalleTarea(id, cliente, tipo, responsable) {
     document.getElementById('stat-ingresos').innerText = `$${total.toLocaleString()}`;
     document.getElementById('stat-vencidos').innerText = vencidos > 0 ? vencidos : 0;
     document.getElementById('stat-clientes').innerText = cacheClientes.length;
+}
+let chartInstancia = null; // Para poder destruir y recrear el gráfico
+
+async function cargarFinanzas() {
+    const res = await fetch(`${API_URL}/api/stats-financieras`);
+    const data = await res.json();
+    
+    const etiquetas = data.map(d => d.mes_referencia);
+    const montos = data.map(d => d.total_cobrado);
+
+    // KPIs Cálculos
+    const totalMesActual = montos[montos.length - 1] || 0;
+    const proyeccionTotal = cacheClientes.reduce((acc, c) => acc + (parseFloat(c.monto_usd || c.monto_ars) || 0), 0);
+    const ticketPromedio = proyeccionTotal / (cacheClientes.length || 1);
+    const efectividad = (totalMesActual / proyeccionTotal) * 100;
+
+    // Pintar KPIs
+    document.getElementById('kpi-ticket').innerText = `$${Math.round(ticketPromedio).toLocaleString()}`;
+    document.getElementById('kpi-proyeccion').innerText = `$${proyeccionTotal.toLocaleString()}`;
+    document.getElementById('kpi-efectividad').innerText = `${Math.round(efectividad)}%`;
+
+    // Dibujar Gráfico
+    const ctx = document.getElementById('chartIngresos').getContext('2d');
+    
+    if (chartInstancia) chartInstancia.destroy(); // Limpiar gráfico anterior
+
+    chartInstancia = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: etiquetas,
+            datasets: [{
+                label: 'Ingresos ($)',
+                data: montos,
+                backgroundColor: '#EF4444', // Rojo SENE
+                borderRadius: 8,
+                barThickness: 40
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { display: false } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
 }
 
     function logout() { localStorage.clear(); window.location.reload(); }
