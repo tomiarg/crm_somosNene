@@ -242,6 +242,10 @@ async function renderMisTareas() {
             <p class="text-[8px] text-slate-400 mt-1 uppercase tracking-widest">Tocar para gestionar</p>
         </div>
     `}).join('');
+    try {
+        const elTareas = document.getElementById('st-tareas') || document.getElementById('stat-tareas');
+        if (elTareas) elTareas.innerText = misTareas.length;
+    } catch(e) {}
 }
 
 // Reemplazamos "gestionarTarea" por esta que te muestra todos los detalles
@@ -274,12 +278,23 @@ async function verDetalleTarea(id, cliente, tipo, responsable) {
     }
 
     function actualizarStats(data) {
-        document.getElementById('st-clientes').innerText = data.length;
-        document.getElementById('st-vencidos').innerText = data.filter(c => c.estado !== 'pagado').length;
-        const cobrado = data.filter(c => c.estado === 'pagado').reduce((acc, c) => acc + (parseFloat(c.monto_pagado) || 0), 0);
-        document.getElementById('st-cobrado').innerText = '$' + cobrado.toLocaleString();
+    try {
+        // Busca cualquiera de los dos IDs por si cambiaste el diseño
+        const elClientes = document.getElementById('st-clientes') || document.getElementById('stat-clientes');
+        const elVencidos = document.getElementById('st-vencidos') || document.getElementById('stat-vencidos');
+        const elCobrado = document.getElementById('st-cobrado') || document.getElementById('stat-ingresos');
+        
+        if (elClientes) elClientes.innerText = data.length;
+        if (elVencidos) elVencidos.innerText = data.filter(c => c.estado !== 'pagado').length;
+        
+        if (elCobrado) {
+            const cobrado = data.filter(c => c.estado === 'pagado').reduce((acc, c) => acc + (parseFloat(c.monto_pagado) || 0), 0);
+            elCobrado.innerText = '$' + cobrado.toLocaleString();
+        }
+    } catch (error) {
+        console.error("Error visual en stats:", error);
     }
-
+}
     function renderCobranzas(data) {
         document.getElementById('cont-cobranzas').innerHTML = data.map(c => `
             <div class="stat-card ${c.estado === 'pagado' ? 'card-paid' : 'card-pending'} flex justify-between items-center shadow-sm">
