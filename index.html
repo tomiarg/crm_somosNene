@@ -89,12 +89,25 @@
             </div>
         </header>
 
-        <div id="stats-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div class="stat-card text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Clientes</p><h2 id="st-clientes" class="text-3xl font-extrabold mt-1">0</h2></div>
-            <div class="stat-card text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Vencidos</p><h2 id="st-vencidos" class="text-3xl font-extrabold mt-1 text-red-500">0</h2></div>
-            <div class="stat-card text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Cobrado</p><h2 id="st-cobrado" class="text-3xl font-extrabold mt-1 text-emerald-500">$0</h2></div>
-            <div class="stat-card text-center"><p class="text-[10px] font-bold text-slate-400 uppercase">Tareas</p><h2 id="st-tareas" class="text-3xl font-extrabold mt-1">0</h2></div>
-        </div>
+       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <p class="text-slate-500 text-sm font-medium">CLIENTES ACTIVOS</p>
+        <h3 id="stat-clientes" class="text-3xl font-bold text-slate-800">0</h3>
+    </div>
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <p class="text-slate-500 text-sm font-medium">TAREAS HOY</p>
+        <h3 id="stat-tareas" class="text-3xl font-bold text-slate-800">0</h3>
+        <p id="stat-tareas-desc" class="text-xs text-slate-400">0 completadas</p>
+    </div>
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <p class="text-slate-500 text-sm font-medium">INGRESOS MES</p>
+        <h3 id="stat-ingresos" class="text-3xl font-bold text-emerald-600">$0</h3>
+    </div>
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <p class="text-slate-500 text-sm font-medium">PAGOS VENCIDOS</p>
+        <h3 id="stat-vencidos" class="text-3xl font-bold text-red-500">0</h3>
+    </div>
+</div>
         <section id="mis-tareas-container" class="mb-10">
     <h3 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 italic">Mis Tareas Pendientes</h3>
     <div id="lista-mis-tareas" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -196,42 +209,58 @@
     }
 
     // --- NUEVA FUNCIÓN: MIS TAREAS EN DASHBOARD ---
-    async function renderMisTareas() {
-        const res = await fetch(`${API_URL}/api/tareas`);
-        const tareas = await res.json();
-        const contenedor = document.getElementById('lista-mis-tareas');
-        if(!contenedor) return;
+async function renderMisTareas() {
+    const res = await fetch(`${API_URL}/api/tareas`);
+    const tareas = await res.json();
+    const contenedor = document.getElementById('lista-mis-tareas');
+    if(!contenedor) return;
 
-        // Filtramos para que cada uno vea solo lo suyo
-        const misTareas = tareas.filter(t => 
-            t.asignado_a.toLowerCase() === user.nombre.toLowerCase()
-        ).sort((a, b) => new Date(a.fecha_ejecucion) - new Date(b.fecha_ejecucion));
+    // Filtramos para que cada uno vea solo lo suyo
+    const misTareas = tareas.filter(t => 
+        t.asignado_a.toLowerCase() === user.nombre.toLowerCase()
+    ).sort((a, b) => new Date(a.fecha_ejecucion) - new Date(b.fecha_ejecucion));
 
-        if (misTareas.length === 0) {
-            contenedor.innerHTML = `<p class="text-xs text-slate-400 italic">No tienes tareas asignadas.</p>`;
-            return;
-        }
-
-        contenedor.innerHTML = misTareas.slice(0, 6).map(t => `
-            <div class="stat-card border-l-4 ${t.asignado_a.toLowerCase() === 'mumi' ? 'border-green-500' : t.asignado_a.toLowerCase() === 'tomi' ? 'border-yellow-500' : 'border-purple-500'} bg-white p-4 rounded-xl shadow-sm">
-                <div class="flex justify-between items-start">
-                    <span class="text-[9px] font-black uppercase text-slate-400">${new Date(t.fecha_ejecucion).toLocaleDateString('es-AR', {weekday: 'short', day: 'numeric'})}</span>
-                    <span class="bg-slate-100 text-[8px] px-2 py-0.5 rounded-full font-bold">${t.tipo_tarea}</span>
-                </div>
-                <h4 class="font-extrabold text-slate-800 mt-2 italic">${t.id_cliente}</h4>
-            </div>
-        `).join('');
+    if (misTareas.length === 0) {
+        contenedor.innerHTML = `<p class="text-xs text-slate-400 italic">No tienes tareas asignadas.</p>`;
+        return;
     }
-    async function gestionarTarea(id, cliente) {
-    if (confirm(`¿Terminaste la tarea de ${cliente}? \nSi aceptas, se eliminará del calendario.`)) {
+
+    contenedor.innerHTML = misTareas.slice(0, 6).map(t => {
+        // 1. Buscamos el nombre real del cliente en la base
+        const cliente = cacheClientes.find(c => c.id_cliente === t.id_cliente);
+        const nombreMostrar = cliente ? cliente.nombre_cliente : t.id_cliente;
+
+        // 2. Agregamos el "onclick", el nombre real y un efecto "hover" para que se note que es clickeable
+        return `
+        <div onclick="verDetalleTarea(${t.id_tarea}, '${nombreMostrar}', '${t.tipo_tarea}', '${t.asignado_a}')" 
+             class="stat-card cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all border-l-4 ${t.asignado_a.toLowerCase() === 'mumi' ? 'border-green-500' : t.asignado_a.toLowerCase() === 'tomi' ? 'border-yellow-500' : 'border-purple-500'} bg-white p-4 rounded-xl shadow-sm">
+            <div class="flex justify-between items-start">
+                <span class="text-[9px] font-black uppercase text-slate-400">${new Date(t.fecha_ejecucion).toLocaleDateString('es-AR', {weekday: 'short', day: 'numeric'})}</span>
+                <span class="bg-slate-100 text-[8px] px-2 py-0.5 rounded-full font-bold">${t.tipo_tarea}</span>
+            </div>
+            <h4 class="font-extrabold text-slate-800 mt-2 italic">${nombreMostrar}</h4>
+            <p class="text-[8px] text-slate-400 mt-1 uppercase tracking-widest">Tocar para gestionar</p>
+        </div>
+    `}).join('');
+}
+
+// Reemplazamos "gestionarTarea" por esta que te muestra todos los detalles
+async function verDetalleTarea(id, cliente, tipo, responsable) {
+    const confirmacion = confirm(
+        `📌 DETALLE DE TAREA:\n\n` +
+        `Cliente: ${cliente}\n` +
+        `Tarea: ${tipo}\n` +
+        `Responsable: ${responsable}\n\n` +
+        `¿Ya terminaste esta tarea? Si das a Aceptar, se eliminará del calendario.`
+    );
+
+    if (confirmacion) {
         try {
-            const res = await fetch(`${API_URL}/api/tareas/${id}`, {
-                method: 'DELETE'
-            });
+            const res = await fetch(`${API_URL}/api/tareas/${id}`, { method: 'DELETE' });
             if (res.ok) {
-                // Recargamos todo para que desaparezca
+                // Actualizamos ambas vistas al borrar
                 await cargarCalendario();
-                if(typeof renderMisTareas === 'function') renderMisTareas();
+                renderMisTareas();
             } else {
                 alert("No se pudo eliminar la tarea");
             }
@@ -381,6 +410,21 @@ async function verDetalleTarea(id, cliente, tipo, responsable) {
             init();
         }
     }
+   
+    async function actualizarMetricasPagos() {
+    const res = await fetch(`${API_URL}/api/pagos`);
+    const pagos = await res.json();
+    
+    const mesActual = new Date().getMonth() + 1;
+    const pagosMes = pagos.filter(p => parseInt(p.mes_referencia) === mesActual);
+    
+    const total = pagosMes.reduce((acc, p) => acc + parseFloat(p.monto || 0), 0);
+    const vencidos = cacheClientes.length - pagosMes.length;
+
+    document.getElementById('stat-ingresos').innerText = `$${total.toLocaleString()}`;
+    document.getElementById('stat-vencidos').innerText = vencidos > 0 ? vencidos : 0;
+    document.getElementById('stat-clientes').innerText = cacheClientes.length;
+}
 
     function logout() { localStorage.clear(); window.location.reload(); }
 </script>
